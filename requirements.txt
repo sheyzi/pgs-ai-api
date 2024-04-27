@@ -1,0 +1,5 @@
+ langchain-google-genai==1.0.3 
+ pillow==10.3.0
+ python-dotenv==1.0.1.
+ fastapi==0.110.2
+ uvicorn==0.29.0
