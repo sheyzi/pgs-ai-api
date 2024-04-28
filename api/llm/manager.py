@@ -19,9 +19,15 @@ class LLMManager:
         :param
             - image: Pillow Image
 
+        uses ocr or pdf text extractor to get text
+        construct a prompt with the text
+
         :return
             - topics:list[str]
         """
+
+        # NOTE: on the frontend there is a hint popup to tell the user what kinda of image works best
+        # eg typed text works better than handwritten and text pdf  gives best results
 
     def get_topics_from_syllabus_pdf(self, pdf) -> list[str]:
         pass
