@@ -1,5 +1,6 @@
 import os
 from fastapi import FastAPI
+from fastapi_extras.errors import configure_error_handlers
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -18,6 +19,7 @@ def configure_router(app: FastAPI):
 def create_app() -> FastAPI:
     app = FastAPI()
     configure_router(app)
+    configure_error_handlers(app)
 
     return app
 
