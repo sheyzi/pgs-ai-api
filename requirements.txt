@@ -6,7 +6,7 @@
  pybase64==1.3.2
  fastapi-extras==0.1.0
  numpy==1.26.4
- opencv-python==4.9.0.80
+ opencv-python-headless==4.9.0.80
  PyMuPDF==1.24.2
  python-multipart==0.0.9
  pytesseract==0.3.10
