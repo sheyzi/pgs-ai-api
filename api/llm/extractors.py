@@ -19,7 +19,6 @@ class ExtractionStrategy(ABC):
 class OCRExtractor(ExtractionStrategy):
 
     # get grayscale image
-
     def get_grayscale(self, image):
 
         return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -107,7 +106,7 @@ class OCRExtractor(ExtractionStrategy):
 
         try:
 
-            nparr = np.fromstring(img_str, np.uint8)
+            nparr = np.frombuffer(img_str, np.uint8)
 
             img_np = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
@@ -129,69 +128,22 @@ class OCRExtractor(ExtractionStrategy):
 class GetTextFromPdf(ExtractionStrategy):
 
     def __init__(self, ocr_handler: ExtractionStrategy) -> None:
-
         self.ocr_handler = ocr_handler
 
-    def _is_multipage_pdf(self, *args, **kwargs):
-        pass
+    def _is_image_pdf(self, page, *args, **kwargs):
+        return len(page.get_text().strip()) == 0
 
-    def _is_image_pdf(self, *args, **kwargs):
-        pass
-
-    def get_text(self, blob: bytes):
-
+    def get_text(self, f_input: bytes):
         text = ""
-
         try:
-
-            path = "Your_scanned_or_partial_scanned.pdf"
-
-            doc = fitz.open(path)
+            doc = fitz.open("pdf", f_input)
 
             for page in doc:
-
-                text += page.get_text()
-
+                if self._is_image_pdf(page):
+                    pix = page.get_pixmap()
+                    image_data = pix.tobytes()
+                    text += self.ocr_handler.get_text(image_data)
+                else:
+                    text += page.get_text()
         finally:
-
             return text
-
-    def _extract_multipaged_data(self, *args, **kwargs):
-        """
-
-        - breaks the pages and iterate over them
-
-        - call extract_single_page_data on each page
-
-        _ concatenate the result to a string separated by new line \n
-
-        """
-
-        pass
-
-    def _extract_single_page_data(self, *args, **kwargs):
-        """
-
-        - takes single page data
-
-        - check if pdf is image
-
-        - if it is image calls function to  handle ocr
-
-        - else get the data
-
-        - return what ever data is gotten
-
-        """
-
-        extracted_data = ""
-
-        try:
-            pass
-
-        finally:
-
-            return extracted_data
-
-
-print(OCRExtractor().get_text(b""))
