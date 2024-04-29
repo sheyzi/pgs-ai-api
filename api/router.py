@@ -16,3 +16,14 @@ def get_topics_from_syllabus_image(image: UploadFile):
     except Exception as e:
         print(e)
         raise BadRequestError("Something went wrong")
+
+
+@router.post("/get-topic-from-syllabus-pdf")
+def get_topics_from_syllabus_image(file: UploadFile):
+    file_str = file.file.read()
+    try:
+        topics = llm_manager.get_topics_from_syllabus_pdf(file_str)
+        return topics
+    except Exception as e:
+        print(e)
+        raise BadRequestError("Something went wrong")
