@@ -30,4 +30,7 @@ app = create_app()
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("main:app", port=8000, reload=True)
+    debug = os.environ.get("DEBUG") or False
+    port = os.environ.get("PORT") or 8080
+
+    uvicorn.run("main:app", port=port, reload=debug)
