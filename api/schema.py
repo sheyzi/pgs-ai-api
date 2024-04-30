@@ -10,3 +10,13 @@ class Topic(BaseModel):
 class NoteSummaryForm(BaseModel):
     topic: str
     note: str
+
+
+class Resource(BaseModel):
+    url: str
+    content: str = None
+
+
+class LessonContent(BaseModel):
+    note: str
+    resources: list[Resource]

@@ -2,7 +2,7 @@ from fastapi import APIRouter, File, UploadFile
 from fastapi_extras.errors import BadRequestError
 
 from api.llm.manager import llm_manager
-from .schema import Topic, NoteSummaryForm
+from .schema import Topic, NoteSummaryForm, LessonContent
 
 router = APIRouter(tags=["LLM"])
 
@@ -19,7 +19,7 @@ def get_topics_from_syllabus_image(image: UploadFile):
 
 
 @router.post("/get-topic-from-syllabus-pdf")
-def get_topics_from_syllabus_image(file: UploadFile):
+def get_topics_from_syllabus_pdf(file: UploadFile):
     file_str = file.file.read()
     try:
         topics = llm_manager.get_topics_from_syllabus_pdf(file_str)
@@ -29,9 +29,14 @@ def get_topics_from_syllabus_image(file: UploadFile):
         raise BadRequestError("Something went wrong")
 
 
-@router.post("/gen-notes")
-def generate_notes():
-    pass
+@router.post("/generate-topic-content", response_model=LessonContent)
+def generate_topic_content(topic_name: str):
+    try:
+        result = llm_manager.generate_topic_content(topic_name)
+        return result
+    except Exception as e:
+        print(e)
+        raise BadRequestError("Something went wrong")
 
 
 @router.post("/summarize")

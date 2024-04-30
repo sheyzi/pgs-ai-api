@@ -1,12 +1,21 @@
 import base64
-from PIL import Image
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.messages import HumanMessage, SystemMessage, BaseMessage
-from fastapi import File
 import json
 import ast
+from PIL import Image
+from fastapi import File
 
-from .schema import LLMContent
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_core.messages import HumanMessage, SystemMessage, BaseMessage
+from langchain_core.prompts import (
+    ChatPromptTemplate,
+    SystemMessagePromptTemplate,
+    HumanMessagePromptTemplate,
+)
+from langchain_community.tools.tavily_search import TavilySearchResults
+from langchain_community.tools import YouTubeSearchTool
+from langchain.agents import AgentExecutor, create_tool_calling_agent
+
+from api.schema import LessonContent, Resource
 from .extractors import GetTextFromPdf, OCRExtractor
 
 ocr_helper = OCRExtractor()
@@ -17,7 +26,10 @@ class LLMManager:
 
     def __init__(self):
         self.vision_model = ChatGoogleGenerativeAI(model="gemini-pro-vision")
-        self.text_model = ChatGoogleGenerativeAI(model="gemini-pro")
+        self.text_model = ChatGoogleGenerativeAI(model="gemini-1.5-pro-latest")
+        self.tavily_search = TavilySearchResults()
+        self.youtube_search = YouTubeSearchTool()
+        self.agent_tools = [self.tavily_search, self.youtube_search]
 
     def get_topics_from_syllabus_image(self, image_str: str) -> list[str]:
         """
@@ -102,8 +114,43 @@ class LLMManager:
 
         return self._process_json(result).get("topics")
 
-    def get_topic_lesson_content(self, topic_name: str) -> LLMContent:
-        pass
+    def generate_topic_content(self, topic_name: str) -> LessonContent:
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                (
+                    "system",
+                    "You are a researcher and a lesson note writer. when given a topic name, you make research and write a very very long and detailed note for that topic. Don't include any additional resources for learning.",
+                ),
+                ("human", "{topic_name}"),
+                ("placeholder", "{agent_scratchpad}"),
+            ]
+        )
+
+        agent = create_tool_calling_agent(self.text_model, self.agent_tools, prompt)
+        agent_executor = AgentExecutor(
+            agent=agent, tools=self.agent_tools, verbose=True
+        )
+        result = agent_executor.invoke({"topic_name": topic_name})
+        web_resources = self.tavily_search.invoke(f"Resources to learn {topic_name}")
+        youtube_resources = self.youtube_search.invoke(f"{topic_name}, 2")
+
+        resources = []
+
+        for resource in web_resources[:3]:
+            resources.append(
+                Resource(url=resource.get("url"), content=resource.get("content"))
+            )
+
+        youtube_resources = youtube_resources.removeprefix("[")
+        youtube_resources = youtube_resources.removesuffix("]")
+        for resource in youtube_resources.split(","):
+            resource = resource.removeprefix("'")
+            resource = resource.removesuffix("'")
+            resources.append(Resource(url=resource))
+
+        lesson_content = LessonContent(note=result["output"], resources=resources)
+
+        return lesson_content
 
     def explain_topic(self, selected_text, context):
         pass
