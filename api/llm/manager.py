@@ -69,7 +69,7 @@ class LLMManager:
 
         result = self.vision_model.invoke([message])
 
-        return self._process_json(result)
+        return self._process_json(result).get("topics")
 
     def get_topics_from_syllabus_pdf(self, pdf) -> list[str]:
         text = pdf_extractor.get_text(pdf)
@@ -100,13 +100,42 @@ class LLMManager:
 
         result = self.text_model.invoke(prompt)
 
-        return self._process_json(result)
+        return self._process_json(result).get("topics")
 
     def get_topic_lesson_content(self, topic_name: str) -> LLMContent:
         pass
 
     def explain_topic(self, selected_text, context):
         pass
+
+    def summarize_topic(self, text, topic):
+        prompt = f"""
+            summarize and highlight crucial point from this text {text} on the topic {topic}
+            
+            Output Formats:
+                - Success: Return a JSON Object formatted exactly as follows
+                {json.dumps({
+                    "status":  "success",
+                    "data": {
+                        "summary":  "generated summary",
+                        "highlights":  ["list of generated crucial point and area of concentration"]
+                    }
+                })}
+
+                - Error: Return a JSON object formatted exactly as follows:
+                                
+                    {json.dumps({
+                        "status": "error",
+                        "message": "Reason for failure"
+                    })}
+                
+
+                NOTE: Only return in the expected format and nothing else, no leading or trailing space should be added. 
+        """
+
+        result = self.text_model.invoke(prompt)
+
+        return self._process_json(result)
 
     def _process_json(self, result: BaseMessage) -> list[str]:
         result_content = result.content.strip()
@@ -117,9 +146,9 @@ class LLMManager:
         result_content = json.loads(result_content)
 
         if result_content.get("status") == "error":
-            raise Exception(result_content.message)
+            raise Exception(result_content.get("message"))
 
-        return result_content.get("topics")
+        return result_content
 
 
 llm_manager = LLMManager()
