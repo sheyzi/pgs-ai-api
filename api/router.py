@@ -29,7 +29,7 @@ def get_topics_from_syllabus_pdf(file: UploadFile):
         raise BadRequestError("Something went wrong")
 
 
-@router.post("/generate-topic-content", response_model=LessonContent)
+@router.get("/generate-topic-content", response_model=LessonContent)
 def generate_topic_content(topic_name: str):
     try:
         result = llm_manager.generate_topic_content(topic_name)
