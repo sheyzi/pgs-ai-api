@@ -18,8 +18,8 @@ def configure_cors(app: FastAPI):
 
     if not origin_env:
         origins = ["http://localhost:5173"]
-
-    origins = origin_env.split(",")
+    else:
+        origins = origin_env.split(",")
 
     app.add_middleware(
         CORSMiddleware,
