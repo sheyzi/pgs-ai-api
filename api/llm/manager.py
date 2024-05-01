@@ -126,16 +126,7 @@ class LLMManager:
                     Instructions: 
                     - Write a long and very comprehensive lesson note about the provided topic.
                     - Output formats:
-                            - Success: Return a JSON Object formatted exactly as follows
-
-                            {"status": "success", "note": "comprehensive markdown lesson note"}
-                            
-
-                            - Error: Return a JSON object formatted exactly as follows:
-
-                            
-                            {status: "error",message: "Reason for failure"}
-                            
+                            - Success: Return a text with the note
 
                         NOTE: Only return in the expected format and nothing else, no leading or trailing space should be added. 
                     """,
@@ -147,9 +138,9 @@ class LLMManager:
             ]
         )
         result = self.text_model.invoke([message])
-        note = self._process_json(result).get("note")
 
-        print(note)
+        note = result.content
+
         web_resources = self.tavily_search.invoke(f"Resources to learn {topic_name}")
         youtube_resources = self.youtube_search.invoke(f"{topic_name}, 2")
 
