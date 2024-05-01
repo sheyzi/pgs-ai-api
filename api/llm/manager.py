@@ -115,22 +115,41 @@ class LLMManager:
         return self._process_json(result).get("topics")
 
     def generate_topic_content(self, topic_name: str) -> LessonContent:
-        prompt = ChatPromptTemplate.from_messages(
-            [
-                (
-                    "system",
-                    "You are a researcher and a lesson note writer. when given a topic name, you make research and write a very very long and detailed note for that topic. Don't include any additional resources for learning.",
-                ),
-                ("human", "{topic_name}"),
-                ("placeholder", "{agent_scratchpad}"),
+        message = HumanMessage(
+            content=[
+                {
+                    "type": "text",
+                    "text": """
+                    You are a teacher and you will be provided a topic name to generate a very comprehensive
+                    topic note for the student. You are to generate just the note alone and nothing else.
+
+                    Instructions: 
+                    - Write a long and very comprehensive lesson note about the provided topic.
+                    - Output formats:
+                            - Success: Return a JSON Object formatted exactly as follows
+
+                            {"status": "success", "note": "comprehensive markdown lesson note"}
+                            
+
+                            - Error: Return a JSON object formatted exactly as follows:
+
+                            
+                            {status: "error",message: "Reason for failure"}
+                            
+
+                        NOTE: Only return in the expected format and nothing else, no leading or trailing space should be added. 
+                    """,
+                },
+                {
+                    "type": "text",
+                    "text": topic_name,
+                },
             ]
         )
+        result = self.text_model.invoke([message])
+        note = self._process_json(result).get("note")
 
-        agent = create_tool_calling_agent(self.text_model, self.agent_tools, prompt)
-        agent_executor = AgentExecutor(
-            agent=agent, tools=self.agent_tools, verbose=True
-        )
-        result = agent_executor.invoke({"topic_name": topic_name})
+        print(note)
         web_resources = self.tavily_search.invoke(f"Resources to learn {topic_name}")
         youtube_resources = self.youtube_search.invoke(f"{topic_name}, 2")
 
@@ -148,7 +167,7 @@ class LLMManager:
             resource = resource.removesuffix("'")
             resources.append(Resource(url=resource))
 
-        lesson_content = LessonContent(note=result["output"], resources=resources)
+        lesson_content = LessonContent(note=note, resources=resources)
 
         return lesson_content
 
