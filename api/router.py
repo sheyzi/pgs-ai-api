@@ -2,7 +2,7 @@ from fastapi import APIRouter, File, UploadFile
 from fastapi_extras.errors import BadRequestError
 
 from api.llm.manager import llm_manager
-from .schema import Topic, NoteSummaryForm, LessonContent
+from .schema import Topic, NoteSummaryForm, LessonContent, GenerateQuiz
 
 router = APIRouter(tags=["LLM"])
 
@@ -43,6 +43,16 @@ def generate_topic_content(topic_name: str):
 def summarize_notes(form: NoteSummaryForm):
     try:
         topics = llm_manager.summarize_topic(form.note, form.topic)
+        return topics
+    except Exception as e:
+        print(e)
+        raise BadRequestError("Something went wrong")
+
+
+@router.post("/generate-quiz")
+def generate_quiz(form: GenerateQuiz):
+    try:
+        topics = llm_manager.generate_quiz(form.text, form.topic)
         return topics
     except Exception as e:
         print(e)

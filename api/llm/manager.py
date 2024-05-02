@@ -194,6 +194,47 @@ class LLMManager:
 
         return self._process_json(result)
 
+    def generate_quiz(self, text, topic):
+        prompt = f"""
+            As a teacher take critically analyze the {text} on the topic {topic}
+
+            Now i want you to generate a list of quizzes together with options (from a - d with one of the options as the correct answer), hint, brief answer explanation, and the answer following this format below
+            
+            Output Formats:
+                - Success: Return a JSON Object formatted exactly as follows
+                {json.dumps({
+                    "status":  "success",
+                    "quizzes": [
+                        {
+                            "question":  "add the question here",
+                            "options": {
+                                "a":  "option A here",
+                                "b": "option B here",
+                                "c": "option C here",
+                                "d": "option D here"
+                            },
+                            "answer": "the correct option here",
+                            "hint": "a very short and vague hint",
+                            "answer-explanation": "a very brief explanation"
+                        }
+                    ]
+                })}
+
+                - Error: Return a JSON object formatted exactly as follows:
+                                
+                    {json.dumps({
+                        "status": "error",
+                        "message": "Reason for failure"
+                    })}
+                
+
+                NOTE: Only return in the expected format and nothing else, no leading or trailing space should be added. 
+        """
+
+        result = self.text_model.invoke(prompt)
+
+        return self._process_json(result)
+
     def _process_json(self, result: BaseMessage) -> list[str]:
         result_content = result.content.strip()
 
