@@ -12,6 +12,11 @@ class NoteSummaryForm(BaseModel):
     note: str
 
 
+class GenerateQuiz(BaseModel):
+    text: str
+    topic: str
+
+
 class Resource(BaseModel):
     url: str
     content: str = None
